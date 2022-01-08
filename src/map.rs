@@ -2,6 +2,9 @@ use crate::prelude::*;
 use bevy::prelude::Commands;
 use std::collections::HashMap;
 
+const OFFSET_FROM_CENTER_X: f64 = -250.0;
+const OFFSET_FROM_CENTER_Y: f64 = -0.0;
+
 pub struct Map {
     pub hexes: HashMap<i32, Hex>,
 }
@@ -14,16 +17,14 @@ impl Map {
     pub fn new() -> Self {
         let mut hexes = HashMap::new();
 
-        let center_coord = Coordinate::new(0,0);
+        let center_coord = Coordinate::new(0, 0);
         let c = center_coord.clone();
-        let center_tile = Hex{c};
+        let center_tile = Hex { c };
         hexes.insert(coord_to_id(&center_tile.c), center_tile);
 
         for r in 0..MAP_HEX_RADIUS {
             for c in center_coord.ring_iter(r as i32, Spin::CCW(XY)) {
-                
-                let id = coord_to_id(&c);
-                let tile = Hex{c};
+                let tile = Hex { c };
                 hexes.insert(coord_to_id(&tile.c), tile);
             }
         }
@@ -31,37 +32,42 @@ impl Map {
         Self { hexes }
     }
 
-    pub fn render(&self, mut commands: Commands, mut materials: ResMut<Assets<ColorMaterial>>, texture_handle: Handle<Texture>) {
-        let hue = 200;
-
-        // Cubic coordinates calculations
-        let inner_angle: f64 = 30.0;
+    pub fn render(
+        &self,
+        commands: &mut Commands,
+    ) {
+        // Length of one hexagon edge
         let size = 50.0;
-        let height = 2.0 * size;
-        let width = size * 2.0 * (inner_angle * 2.0).to_radians().sin();
 
+        // Hexagon shape config
+        let shape = shapes::RegularPolygon {
+            sides: 6,
+            feature: shapes::RegularPolygonFeature::Radius(50.0),
+            ..shapes::RegularPolygon::default()
+        };
+
+        // Spawn each hexagon
         for (_index, hex) in &self.hexes {
+            // Create the screen position for the hex
             let pixel = hex.c.to_pixel(Spacing::PointyTop(size));
-            let transform = Transform::from_xyz(pixel.0 as f32, pixel.1 as f32, 0.0);
+            let mut transform = Transform::from_xyz(
+                (pixel.0 + OFFSET_FROM_CENTER_X) as f32,
+                (pixel.1 + OFFSET_FROM_CENTER_Y) as f32,
+                0.0,
+            );
+            transform.rotate(Quat::from_rotation_z(30.0_f32.to_radians()));
 
-            // Spawn a hex
-            commands
-            .spawn_bundle(SpriteBundle {
-                material: materials.add(ColorMaterial {
-                    color: Color::hsla(hue as f32, 0.8, 0.5, 1.0),
-                    texture: Some(texture_handle.clone()),
-                }),
-                transform: transform,
-                sprite: Sprite {
-                    size: Vec2::new(width as f32, height as f32),
-                    resize_mode: SpriteResizeMode::Manual,
-                    ..Default::default()
+            // Render the hex
+            commands.spawn_bundle(GeometryBuilder::build_as(
+                &shape,
+                ShapeColors::outlined(Color::BEIGE, Color::BLACK),
+                DrawMode::Outlined {
+                    fill_options: FillOptions::default(),
+                    outline_options: StrokeOptions::default().with_line_width(2.0),
                 },
-                ..Default::default()
-            });
+                transform,
+            ));
         }
-
-
     }
 }
 

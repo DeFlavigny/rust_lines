@@ -1,18 +1,22 @@
 mod components;
-mod spawner;
 mod map;
+mod movement;
+
+use bevy_prototype_lyon::prelude::*;
+use components::*;
+use map::Map;
+use movement::*;
+use prelude::MoveMode;
 
 mod prelude {
-    pub use bevy::prelude::*;
+    pub use crate::components::*;
     pub use crate::map::*;
+    pub use bevy::prelude::*;
+    pub use bevy_prototype_lyon::prelude::*;
     pub use hex2d::*;
 
     //Map config
     pub const MAP_HEX_RADIUS: usize = 5;
-    pub const SCREENPOS_START_X: i64 = -250;
-    pub const SCREENPOS_START_Y: i64 = -250;
-
-    pub const HEX_SPRITE_PATH: &str = "sprites/white_hex.png";
 }
 
 use bevy::{
@@ -22,42 +26,36 @@ use bevy::{
     sprite::collide_aabb::{collide, Collision},
 };
 
-use map::Map;
-use prelude::HEX_SPRITE_PATH;
-
 fn main() {
     App::build()
+        .insert_resource(Msaa { samples: 8 })
         .add_plugins(DefaultPlugins)
-        .insert_resource(ClearColor(Color::rgb(0.9, 0.9, 0.9)))
-        .add_startup_system(setup.system())
+        .add_plugin(ShapePlugin)
+        .add_plugin(DefaultLinesPlugin)
         .run();
 }
 
-enum Collider {
-    Solid,
-    Scorable,
-}
-
-fn setup(
-    mut commands: Commands,
-    materials: ResMut<Assets<ColorMaterial>>,
-    asset_server: Res<AssetServer>,
-) {
+fn setup(mut commands: Commands) {
     // cameras
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
     commands.spawn_bundle(UiCameraBundle::default());
 
-    let texture_handle = asset_server.load(HEX_SPRITE_PATH);
+    map_setup(&mut commands);
+    game_setup(&mut commands);
+}
 
+fn map_setup(commands: &mut Commands) {
     let map = Map::new();
-    map.render(commands, materials, texture_handle);
-
+    map.render(commands);
 }
 
-fn hue_from_coords(x: u32, y: u32) -> u32 {
-    (350 + y * 3 + x * 12) % 360
-}
+fn game_setup(commands: &mut Commands) {}
 
-struct Tint {
-    hue: u32,
+pub struct DefaultLinesPlugin;
+
+impl Plugin for DefaultLinesPlugin {
+    fn build(&self, app: &mut AppBuilder) {
+        app.add_startup_system(setup.system())
+            .add_system_to_stage(CoreStage::PreUpdate, cursor_tracking_system.system());
+    }
 }

@@ -12,6 +12,7 @@ pub fn cursor_tracking_system(
     mut e_cursor_moved: EventReader<CursorMoved>,
     mut query: Query<(&mut Cursor, &mut Transform)>,
 ) {
+    /* 
     let (mut cursor, mut transform) = query.single_mut().expect("Did not find exactly one cursor");
     let event = e_cursor_moved.iter().next();
     match event {
@@ -21,4 +22,5 @@ pub fn cursor_tracking_system(
         }
         None => cursor.has_moved = false,
     }
+    */
 }

@@ -49,7 +49,9 @@ fn map_setup(commands: &mut Commands) {
     map.render(commands);
 }
 
-fn game_setup(commands: &mut Commands) {}
+fn game_setup(commands: &mut Commands) {
+    
+}
 
 pub struct DefaultLinesPlugin;
 

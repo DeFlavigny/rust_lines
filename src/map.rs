@@ -60,10 +60,9 @@ impl Map {
             // Render the hex
             commands.spawn_bundle(GeometryBuilder::build_as(
                 &shape,
-                ShapeColors::outlined(Color::BEIGE, Color::BLACK),
                 DrawMode::Outlined {
-                    fill_options: FillOptions::default(),
-                    outline_options: StrokeOptions::default().with_line_width(2.0),
+                    fill_mode: FillMode::color(Color::BEIGE),
+                    outline_mode: StrokeMode::new(Color::BLACK, 2.0),
                 },
                 transform,
             ));

@@ -2,11 +2,11 @@ mod components;
 mod map;
 mod movement;
 
+use std::env;
+
 use bevy_prototype_lyon::prelude::*;
-use components::*;
 use map::Map;
 use movement::*;
-use prelude::MoveMode;
 
 mod prelude {
     pub use crate::components::*;
@@ -22,12 +22,12 @@ mod prelude {
 use bevy::{
     core::FixedTimestep,
     prelude::*,
-    render::pass::ClearColor,
     sprite::collide_aabb::{collide, Collision},
 };
+use prelude::Cursor;
 
 fn main() {
-    App::build()
+    App::new()
         .insert_resource(Msaa { samples: 8 })
         .add_plugins(DefaultPlugins)
         .add_plugin(ShapePlugin)
@@ -35,13 +35,21 @@ fn main() {
         .run();
 }
 
+pub struct DefaultLinesPlugin;
+
+impl Plugin for DefaultLinesPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_startup_system(setup);
+    }
+}
+
 fn setup(mut commands: Commands) {
     // cameras
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
     commands.spawn_bundle(UiCameraBundle::default());
 
-    map_setup(&mut commands);
-    game_setup(&mut commands);
+    //map_setup(&mut commands);
+    //game_setup(&mut commands);
 }
 
 fn map_setup(commands: &mut Commands) {
@@ -49,13 +57,25 @@ fn map_setup(commands: &mut Commands) {
     map.render(commands);
 }
 
-fn game_setup(commands: &mut Commands) {}
+fn game_setup(commands: &mut Commands) {
 
-pub struct DefaultLinesPlugin;
+    let shape = shapes::RegularPolygon {
+        sides: 6,
+        feature: shapes::RegularPolygonFeature::Radius(50.0),
+        ..shapes::RegularPolygon::default()
+    };
 
-impl Plugin for DefaultLinesPlugin {
-    fn build(&self, app: &mut AppBuilder) {
-        app.add_startup_system(setup.system())
-            .add_system_to_stage(CoreStage::PreUpdate, cursor_tracking_system.system());
-    }
+    commands.spawn_bundle(GeometryBuilder::build_as(
+        &shapes::Circle {
+            radius:5.0,
+            center:Vec2::new(0.0,0.0),
+        },
+        DrawMode::Outlined {
+            fill_mode: FillMode::color(Color::BEIGE),
+            outline_mode: StrokeMode::new(Color::BLACK, 2.0),
+        },
+        Transform::default(),
+    )).insert(Cursor {has_moved:false});
 }
+
+
